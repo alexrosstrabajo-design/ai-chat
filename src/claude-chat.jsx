@@ -299,7 +299,7 @@ export default function App() {
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 24px", borderBottom: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(24px)", background: "rgba(0,0,0,0.35)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>✦</div>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>AR</div>
               <div>
                 <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 16, color: "#ffffff", letterSpacing: "-0.02em" }}>Automator by Alex</div>
                 <div style={{ fontSize: 11, color: loading ? "#fbbf24" : "rgba(255,255,255,0.5)", letterSpacing: "0.08em" }}>{loading ? "THINKING..." : "ONLINE"}</div>
