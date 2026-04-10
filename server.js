@@ -18,14 +18,31 @@ app.post('/api/chat', async (req, res) => {
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
+        stream: true,
         messages: [
           { role: 'system', content: system || 'You are a helpful assistant.' },
           ...messages
         ]
       })
     })
-    const data = await response.json()
-    res.json(data)
+
+    if (!response.ok) {
+      const err = await response.text()
+      return res.status(response.status).json({ error: err })
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream')
+    res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('Connection', 'keep-alive')
+
+    // Pipe the Groq SSE stream straight to the client
+    response.body.pipeTo(
+      new WritableStream({
+        write(chunk) { res.write(chunk) },
+        close() { res.end() },
+        abort(err) { res.end() }
+      })
+    )
   } catch (err) {
     res.status(500).json({ error: 'Failed to reach Groq API' })
   }

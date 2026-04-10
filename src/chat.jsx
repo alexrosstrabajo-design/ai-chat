@@ -239,6 +239,7 @@ export default function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState(null);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
@@ -247,7 +248,7 @@ export default function App() {
 
   const sendMessage = async () => {
     const text = input.trim();
-    if (!text || loading) return;
+    if (!text || loading return;
     const updated = [...messages, { role: "user", content: text }];
     setMessages(updated); setInput(""); setLoading(true); setError(null);
     try {
@@ -256,10 +257,57 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ system: SYSTEM_PROMPT, messages: updated }),
       });
-      const data = await res.json();
-      setMessages(prev => [...prev, { role: "assistant", content: data.choices?.[0]?.message?.content || "No response." }]);
-    } catch { setError("Failed to reach Automator."); }
-    finally { setLoading(false); inputRef.current?.focus(); }
+
+      if (!res.ok || !res.body) {
+        const err = await res.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(err.error || "Failed to reach Automator.");
+      }
+
+      // Add an empty assistant message immediately — we'll stream content into it
+      setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+      setStreaming(false); // reset in case of retry
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        // SSE lines look like: "data: {...}\n\n"
+        const lines = buffer.split("\n");
+        buffer = lines.pop(); // keep any partial last line for next iteration
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed === "data: [DONE]") continue;
+          if (!trimmed.startsWith("data: ")) continue;
+          try {
+            const json = JSON.parse(trimmed.slice(6));
+            const token = json.choices?.[0]?.delta?.content;
+            if (token) {
+              setStreaming(true);
+              setMessages(prev => {
+                const copy = [...prev];
+                copy[copy.length - 1] = {
+                  ...copy[copy.length - 1],
+                  content: copy[copy.length - 1].content + token,
+                };
+                return copy;
+              });
+            }
+          } catch { /* skip malformed chunks */ }
+        }
+      }
+    } catch (e) {
+      setError(e.message || "Failed to reach Automator.");
+    } finally {
+      setLoading(false);
+      setStreaming(false);
+      inputRef.current?.focus();
+    }
   };
 
   return (
@@ -327,7 +375,7 @@ export default function App() {
               </div>
             )}
             {messages.map((msg, i) => <MessageBubble key={i} msg={msg} />)}
-            {loading && (
+            {loading && !streaming && (
               <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 12 }}>
                 <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, marginRight: 8, flexShrink: 0 }}>✦</div>
                 <div style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "18px 18px 18px 4px", backdropFilter: "blur(20px)" }}><TypingIndicator /></div>
