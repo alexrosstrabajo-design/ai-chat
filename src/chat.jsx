@@ -5,7 +5,7 @@ const MAX_COLORS = 8;
 
 // ─── Simple Markdown Parser ─────────────────────────────────────────────────
 function parseMarkdown(text) {
-  if (!text) return null;
+  if (!text) return [{ type: "text", value: "" }];
   const parts = [];
   let remaining = text;
 
