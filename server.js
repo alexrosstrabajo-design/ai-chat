@@ -17,7 +17,7 @@ app.post('/api/chat', async (req, res) => {
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
         stream: true,
         messages: [
           { role: 'system', content: system || 'You are a helpful assistant.' },
