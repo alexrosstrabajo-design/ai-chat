@@ -235,7 +235,7 @@ function MessageBubble({ msg }) {
   );
 }
 
-export default function App() {
+export default function ClaudeChat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -248,7 +248,7 @@ export default function App() {
 
   const sendMessage = async () => {
     const text = input.trim();
-    if (!text || loading return;
+    if (!text || loading) return;
     const updated = [...messages, { role: "user", content: text }];
     setMessages(updated); setInput(""); setLoading(true); setError(null);
     try {

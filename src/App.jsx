@@ -1,4 +1,4 @@
-import ClaudeChat from './claude-chat'
+import ClaudeChat from './chat'
 
 export default function App() {
   return <ClaudeChat />
