@@ -4,11 +4,7 @@ export const config = {
   runtime: 'nodejs',
 };
 
-export default async function handler(request) {
-  if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
-  }
-
+export async function POST(request) {
   let body;
   try {
     body = await request.json();
