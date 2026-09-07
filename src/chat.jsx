@@ -3,6 +3,65 @@ import * as THREE from "three";
 
 const MAX_COLORS = 8;
 
+// ─── Simple Markdown Parser ─────────────────────────────────────────────────
+function parseMarkdown(text) {
+  if (!text) return null;
+  const parts = [];
+  let remaining = text;
+
+  // Process inline: **bold**, *italic*, `code`
+  const inlineRegex = /\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = inlineRegex.exec(remaining)) !== null) {
+    // Text before this match
+    if (match.index > lastIndex) {
+      parts.push({ type: "text", value: remaining.slice(lastIndex, match.index) });
+    }
+
+    if (match[1] !== undefined) {
+      // **bold**
+      parts.push({ type: "bold", value: match[1] });
+    } else if (match[2] !== undefined) {
+      // *italic*
+      parts.push({ type: "italic", value: match[2] });
+    } else if (match[3] !== undefined) {
+      // `code`
+      parts.push({ type: "code", value: match[3] });
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Remaining text after last match
+  if (lastIndex < remaining.length) {
+    parts.push({ type: "text", value: remaining.slice(lastIndex) });
+  }
+
+  return parts.length > 0 ? parts : [{ type: "text", value: text }];
+}
+
+function MarkdownContent({ content }) {
+  const parts = parseMarkdown(content);
+  return (
+    <>
+      {parts.map((part, i) => {
+        switch (part.type) {
+          case "bold":
+            return <strong key={i} style={{ fontWeight: 700 }}>{part.value}</strong>;
+          case "italic":
+            return <em key={i} style={{ fontStyle: "italic" }}>{part.value}</em>;
+          case "code":
+            return <code key={i} style={{ background: "rgba(255,255,255,0.15)", padding: "2px 6px", borderRadius: 4, fontFamily: "monospace", fontSize: "0.9em" }}>{part.value}</code>;
+          default:
+            return <span key={i}>{part.value}</span>;
+        }
+      })}
+    </>
+  );
+}
+
 const frag = `
 #define MAX_COLORS 8
 uniform vec2 uCanvas;
@@ -230,7 +289,9 @@ function MessageBubble({ msg }) {
         border: isUser ? "1px solid rgba(255,255,255,0.5)" : "1px solid rgba(255,255,255,0.12)",
         boxShadow: isUser ? "0 4px 20px rgba(0,0,0,0.3)" : "0 2px 12px rgba(0,0,0,0.4)",
         whiteSpace: "pre-wrap", wordBreak: "break-word", overflowWrap: "break-word", fontFamily: "'DM Sans',sans-serif",
-      }}>{msg.content}</div>
+      }}>
+        <MarkdownContent content={msg.content} />
+      </div>
     </div>
   );
 }
